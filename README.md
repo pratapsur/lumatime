@@ -132,4 +132,4 @@ After a period of inactivity, the application becomes essentially:
 │                  21:42                      │
 │                                             │
 │                                             │
-└─────────────────────────────────────────────┘<img width="1917" height="1078" alt="Screenshot 2026-09-28 221111" src="https://github.com/user-attachments/assets/8419cdd1-3377-45c4-a371-9f8eb427c429" />
+└─────────────────────────────────────────────┘
