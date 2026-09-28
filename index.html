@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Clock</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);--bg:#000;--fg:#fff;--card:#121212;--u:200px;--fd:600ms;--persp:8em;--br:1;--gsh:none;--tsh:none;--ease:cubic-bezier(.22,.61,.36,1)}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--fg);overflow:hidden;font-family:"SF Pro Display",Inter,-apple-system,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased;transition:background .6s var(--ease)}
+body{height:100%}
+body.idle{cursor:none}
+[hidden]{display:none!important}
+button{all:unset;cursor:pointer}
+button:focus-visible{outline:1px solid currentColor;outline-offset:4px}
+main{position:fixed;inset:0;display:grid;place-items:center;user-select:none}
+.stage{display:flex;flex-direction:column;align-items:center;gap:calc(var(--u)*.16)}
+.clock{display:flex;align-items:center;gap:.16em;font-size:var(--u);filter:brightness(var(--br))}
+.clock.done{animation:pulse 1.4s ease-in-out 3}
+@keyframes pulse{50%{opacity:.3}}
+.g{display:flex;gap:.05em}
+.c{width:.12em;height:.32em;display:flex;flex-direction:column;justify-content:space-between;align-items:center}
+.c i{width:.06em;height:.06em;border-radius:50%;background:var(--fg);box-shadow:var(--tsh)}
+.d{position:relative;width:.62em;height:1em;perspective:var(--persp);border-radius:.07em;background:var(--card);box-shadow:var(--gsh),0 .03em .08em rgba(0,0,0,.6)}
+.d::after{content:"";position:absolute;left:0;right:0;top:calc(50% - .005em);height:.01em;background:var(--bg);z-index:5}
+.t,.b,.ft,.fb{position:absolute;left:0;width:100%;height:50%;overflow:hidden;background:var(--card);backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.t,.ft{top:0;border-radius:.07em .07em 0 0;transform-origin:50% 100%}
+.b,.fb{bottom:0;border-radius:0 0 .07em .07em;transform-origin:50% 0}
+.t::after,.ft::after,.b::after,.fb::after{content:"";position:absolute;inset:0;pointer-events:none}
+.t::after,.ft::after{background:linear-gradient(#0000 50%,#0005)}
+.b::after,.fb::after{background:linear-gradient(#0006,#0000 45%)}
+.d span{position:absolute;left:0;width:100%;height:200%;display:flex;align-items:center;justify-content:center;font-size:.9em;font-weight:300;line-height:1;color:var(--fg);text-shadow:var(--tsh);font-variant-numeric:tabular-nums}
+.t span,.ft span{top:0}
+.b span,.fb span{top:-100%}
+.ft{display:none;z-index:3}
+.fb{display:none;z-index:3;transform:rotateX(90deg)}
+.d.go .ft{display:block;animation:f1 calc(var(--fd)/2) cubic-bezier(.5,0,.9,.6) forwards}
+.d.go .fb{display:block;animation:f2 calc(var(--fd)/2) cubic-bezier(.1,.5,.4,1) calc(var(--fd)/2) both}
+@keyframes f1{to{transform:rotateX(-90deg);filter:brightness(.35)}}
+@keyframes f2{from{transform:rotateX(90deg);filter:brightness(.35)}to{transform:rotateX(0);filter:brightness(1)}}
+.sub{font-size:max(11px,calc(var(--u)*.07));letter-spacing:.3em;padding-left:.3em;opacity:.4;height:1.4em;white-space:nowrap}
+.ui{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;padding:0 24px calc(26px + env(safe-area-inset-bottom,0px));pointer-events:none;transition:opacity 1s var(--ease);z-index:5}
+.bar{display:flex;flex-direction:column;align-items:center;gap:16px;pointer-events:auto}
+.ico{position:fixed;right:max(20px,env(safe-area-inset-right,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px));display:flex;gap:4px;z-index:6;transition:opacity 1s var(--ease)}
+.idle .ui,.idle .ico{opacity:0;pointer-events:none}
+.idle .ui *,.idle .ico *{pointer-events:none}
+.ui button,.ico button,.ti input,.ti i{color:var(--fg);opacity:.4;transition:opacity .4s var(--ease)}
+.ui button:hover,.ico button:hover,.ui button.on{opacity:.95}
+.ico button{width:34px;height:34px;display:grid;place-items:center}
+.ico svg{width:20px;height:20px}
+.act{display:flex;align-items:center;gap:26px;font-size:14px;letter-spacing:.04em}
+.modes{display:flex;gap:22px;font-size:12.5px}
+.ti{display:flex;align-items:baseline;gap:3px;font-size:15px}
+.ti input{all:unset;width:2em;text-align:center;border-bottom:1px solid currentColor;-moz-appearance:textfield}
+.ti input::-webkit-inner-spin-button{display:none}
+.ti input:focus,.ti input:hover{opacity:.95}
+.ti i{font-style:normal;margin-right:10px;font-size:12px}
+.laps{font-size:12.5px;color:var(--fg);opacity:.5;display:flex;flex-direction:column;gap:3px;font-variant-numeric:tabular-nums}
+.laps div{display:grid;grid-template-columns:2em 6em 6em;text-align:center}
+@media(max-width:600px){.ui{padding-bottom:calc(66px + env(safe-area-inset-bottom,0px))}}
+.panel{position:fixed;right:max(20px,env(safe-area-inset-right,0px));bottom:calc(64px + env(safe-area-inset-bottom,0px));width:min(320px,calc(100vw - 40px));max-height:calc(100dvh - 110px);overflow:auto;padding:4px 18px 14px;border-radius:18px;background:rgba(40,40,42,.62);backdrop-filter:blur(30px) saturate(1.6);-webkit-backdrop-filter:blur(30px) saturate(1.6);border:1px solid rgba(255,255,255,.09);box-shadow:0 20px 60px rgba(0,0,0,.5);color:#f2f2f7;font-size:13px;opacity:0;visibility:hidden;transform:translateY(8px) scale(.985);transition:opacity .45s var(--ease),transform .45s var(--ease),visibility .45s;z-index:10}
+.panel.open{opacity:1;visibility:visible;transform:none}
+.panel h4{font-size:12px;font-weight:500;color:rgba(255,255,255,.45);margin:14px 0 3px}
+.r{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:34px}
+input[type=range]{-webkit-appearance:none;appearance:none;width:140px;height:2px;background:rgba(255,255,255,.25);border-radius:2px;outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 1px 4px #0006}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;border:0;border-radius:50%;background:#fff}
+.tg{-webkit-appearance:none;appearance:none;width:36px;height:22px;border-radius:11px;background:rgba(255,255,255,.2);position:relative;cursor:pointer;transition:background .3s}
+.tg::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .3s var(--ease)}
+.tg:checked{background:#30d158}.tg:checked::after{transform:translateX(14px)}
+.num{width:58px;background:rgba(255,255,255,.1);border:0;border-radius:7px;color:inherit;font:inherit;padding:5px;text-align:center}
+.sws{display:flex;gap:8px;align-items:center}
+.sws button,.cu{width:18px;height:18px;border-radius:50%;border:1px solid rgba(255,255,255,.28);cursor:pointer}
+.sws button.on{outline:2px solid #fff;outline-offset:2px}
+.cu{position:relative;overflow:hidden;background:conic-gradient(red,yellow,lime,cyan,blue,magenta,red)}
+.cu input{position:absolute;inset:-6px;width:32px;height:32px;opacity:0;cursor:pointer}
+.keys{display:grid;grid-template-columns:auto 1fr;gap:7px 14px;color:rgba(255,255,255,.7);margin-top:6px;align-items:center}
+.keys b{font:500 11px ui-monospace,Menlo,monospace;background:rgba(255,255,255,.1);padding:2px 7px;border-radius:5px;text-align:center}
+@media(prefers-reduced-motion:reduce){.d.go .ft,.d.go .fb{animation-duration:1ms;animation-delay:0s}}
+</style></head><body>
+<main><div class="stage"><div class="clock" id="clock" role="timer" aria-label="Clock"></div><div class="sub" id="sub"></div></div></main>
+<div class="ui"><div class="bar">
+ <div class="laps" id="laps" hidden></div>
+ <div class="act" id="act" hidden>
+  <span class="ti" id="ti"><input type="number" id="ti-h" min="0" max="99" aria-label="Hours"><i>h</i><input type="number" id="ti-m" min="0" max="59" aria-label="Minutes"><i>m</i><input type="number" id="ti-s" min="0" max="59" aria-label="Seconds"><i>s</i></span>
+  <button id="go">Start</button><button id="rs">Reset</button><button id="lp" hidden>Lap</button><button id="sk" hidden>Skip</button>
+ </div>
+ <nav class="modes" id="modes"><button data-m="time">Time</button><button data-m="stopwatch">Stopwatch</button><button data-m="timer">Timer</button><button data-m="pomodoro">Pomodoro</button></nav>
+</div></div>
+<div class="ico">
+ <button id="fsb" aria-label="Fullscreen (F)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg></button>
+ <button id="gear" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="6.6"/><circle cx="12" cy="12" r="8.6" stroke-width="2" stroke-dasharray="2.1 2.19"/></svg></button>
+</div>
+<div class="panel" id="panel" role="dialog" aria-label="Settings">
+ <h4>Appearance</h4>
+ <div class="r"><span>Background</span><div class="sws" id="sw-bg"></div></div>
+ <div class="r"><span>Digits</span><div class="sws" id="sw-fg"></div></div>
+ <div class="r"><span>Glow</span><input type="range" data-k="glow" min="0" max="1" step=".01" aria-label="Glow, off to max"></div>
+ <div class="r"><span>Brightness</span><input type="range" data-k="br" min=".3" max="1" step=".01" aria-label="Brightness, dim to bright"></div>
+ <div class="r"><span>Flip</span><input type="range" data-k="anim" min="0" max="1" step=".01" aria-label="Flip, subtle to dynamic"></div>
+ <div class="r"><span>Size</span><input type="range" data-k="size" min=".5" max="1" step=".01" aria-label="Size, small to large"></div>
+ <h4>Clock</h4>
+ <div class="r"><span>24-hour</span><input class="tg" type="checkbox" data-k="h24"></div>
+ <div class="r"><span>Show seconds</span><input class="tg" type="checkbox" data-k="secs"></div>
+ <div class="r"><span>Tick sound</span><input class="tg" type="checkbox" data-k="tick"></div>
+ <h4>Pomodoro (minutes)</h4>
+ <div class="r"><span>Focus</span><input class="num" type="number" data-k="pf" min="1" max="180"></div>
+ <div class="r"><span>Short break</span><input class="num" type="number" data-k="ps" min="1" max="60"></div>
+ <div class="r"><span>Long break</span><input class="num" type="number" data-k="pl" min="1" max="90"></div>
+ <div class="r"><span>Sessions</span><input class="num" type="number" data-k="pn" min="1" max="12"></div>
+ <h4>Keyboard shortcuts</h4>
+ <div class="keys"><b>F</b><span>Fullscreen</span><b>Space</b><span>Start or pause</span><b>R</b><span>Reset</span><b>L</b><span>Lap</span><b>1 2 3 4</b><span>Time, stopwatch, timer, pomodoro</span><b>Esc</b><span>Close settings</span></div>
+</div>
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const KEY='flipclock.v1';
+const S={mode:'time',h24:true,secs:false,bg:'#000000',fg:'#ffffff',glow:.2,br:1,size:.85,anim:.3,tick:false,pf:25,ps:5,pl:15,pn:4,td:300000};
+try{Object.assign(S,JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const p2=n=>String(n).padStart(2,'0'),now=()=>Date.now();
+const rgb=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
+function lift(h){const c=rgb(h),l=(c[0]*.3+c[1]*.6+c[2]*.1)/255;return'#'+c.map(v=>Math.round(l>.5?v*.93:v+(255-v)*.075).toString(16).padStart(2,'0')).join('')}
+let fd=700;
+function theme(){
+ const st=document.documentElement.style,c=rgb(S.fg).join(','),g=S.glow;
+ st.setProperty('--bg',S.bg);st.setProperty('--fg',S.fg);st.setProperty('--card',lift(S.bg));
+ st.setProperty('--gsh',`0 0 ${(g*.5).toFixed(3)}em ${(g*.02).toFixed(3)}em rgba(${c},${(g*.28).toFixed(3)})`);
+ st.setProperty('--tsh',`0 0 ${(g*.06).toFixed(3)}em rgba(${c},${(g*.55).toFixed(3)})`);
+ st.setProperty('--br',S.br);st.setProperty('--persp',(11-6*S.anim).toFixed(1)+'em');
+ fd=850-420*S.anim;st.setProperty('--fd',fd+'ms');
+}
+/* flip digit */
+function mkDigit(){
+ const el=document.createElement('div');el.className='d';
+ el.innerHTML='<div class="t"><span></span></div><div class="b"><span></span></div><div class="ft"><span></span></div><div class="fb"><span></span></div>';
+ const q=c=>el.querySelector(c+' span'),t=q('.t'),b=q('.b'),ft=q('.ft'),fb=q('.fb');let cur=null,to;
+ const fin=()=>{clearTimeout(to);el.classList.remove('go');b.textContent=cur};
+ return{el,set(v){
+  if(v===cur)return;const old=cur;
+  if(el.classList.contains('go'))fin();
+  cur=v;t.textContent=v;fb.textContent=v;
+  if(old===null||RM){b.textContent=v;return}
+  ft.textContent=old;b.textContent=old;void el.offsetWidth;el.classList.add('go');to=setTimeout(fin,fd+30);
+ }};
+}
+const clock=$('#clock');let digs=[],gcount=0;
+function build(n){
+ clock.innerHTML='';digs=[];
+ for(let i=0;i<n;i++){
+  if(i){const c=document.createElement('div');c.className='c';c.innerHTML='<i></i><i></i>';clock.append(c)}
+  const g=document.createElement('div');g.className='g';
+  for(let j=0;j<2;j++){const d=mkDigit();digs.push(d);g.append(d.el)}
+  clock.append(g);
+ }
+ gcount=n;fit();
+}
+function fit(){
+ const n=gcount||2,W=n*1.29+(n-1)*.12+(2*n-2)*.16;
+ const u=Math.min(innerWidth*.88/W,innerHeight*.5)*S.size;
+ document.documentElement.style.setProperty('--u',u.toFixed(1)+'px');
+}
+/* engines: timestamps, not counters, so throttled tabs stay accurate */
+const sw={acc:0,t0:0,run:false,laps:[]},cd={left:S.td,end:0,run:false},pm={ph:'f',n:1,left:S.pf*6e4,end:0,run:false};
+const PN={f:'Focus',s:'Short break',l:'Long break'};
+const swMs=()=>sw.acc+(sw.run?now()-sw.t0:0),rem=o=>o.run?Math.max(0,o.end-now()):o.left;
+function hms(sec,fh){const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),s=sec%60;return(h||fh)?[p2(h),p2(m),p2(s)]:[p2(m),p2(s)]}
+function view(){
+ const d=new Date();
+ switch(S.mode){
+  case'time':{let h=d.getHours();const ap=h<12?'AM':'PM';if(!S.h24)h=h%12||12;const g=[p2(h),p2(d.getMinutes())];if(S.secs)g.push(p2(d.getSeconds()));return{g,sub:S.h24?'':ap}}
+  case'stopwatch':{const ms=swMs();return{g:hms(Math.floor(ms/1000)),sub:'.'+p2(Math.floor(ms%1000/10))}}
+  case'timer':return{g:hms(Math.ceil(rem(cd)/1000),S.td>=36e5),sub:''};
+  default:return{g:hms(Math.ceil(rem(pm)/1000),Math.max(S.pf,S.ps,S.pl)>=60),sub:PN[pm.ph]+' \u00b7 '+pm.n+'/'+S.pn};
+ }
+}
+const isRun=()=>S.mode==='stopwatch'?sw.run:S.mode==='timer'?cd.run:S.mode==='pomodoro'&&pm.run;
+function advance(){
+ if(pm.ph==='f')pm.ph=pm.n>=S.pn?'l':'s';
+ else{if(pm.ph==='l')pm.n=1;else pm.n++;pm.ph='f'}
+ pm.left=S['p'+pm.ph]*6e4;
+}
+function done(){clock.classList.remove('done');void clock.offsetWidth;clock.classList.add('done');setTimeout(()=>clock.classList.remove('done'),4300);syncUI()}
+let lastSec=-1,ttl='';
+function tick(){
+ const t=now();
+ if(cd.run&&t>=cd.end){cd.run=false;cd.left=0;if(S.mode==='timer')done();else syncUI()}
+ if(pm.run&&t>=pm.end){pm.run=false;advance();if(S.mode==='pomodoro')done();else syncUI()}
+ const v=view();if(v.g.length!==gcount)build(v.g.length);
+ const s=v.g.join('');for(let i=0;i<s.length;i++)digs[i].set(s[i]);
+ if($('#sub').textContent!==v.sub)$('#sub').textContent=v.sub;
+ const T=S.mode!=='time'&&isRun()?v.g.join(':'):'Clock';if(T!==ttl){ttl=T;document.title=T}
+ const sec=Math.floor(t/1000);
+ if(sec!==lastSec){lastSec=sec;if(S.tick&&(S.mode==='time'||isRun()))click()}
+}
+setInterval(tick,50);
+/* actions */
+function toggle(){
+ const t=now(),m=S.mode;
+ if(m==='stopwatch'){if(sw.run){sw.acc+=t-sw.t0;sw.run=false}else{sw.t0=t;sw.run=true}}
+ else if(m==='timer'||m==='pomodoro'){
+  const o=m==='timer'?cd:pm;
+  if(o.run){o.left=Math.max(0,o.end-t);o.run=false}
+  else{if(o===cd&&o.left<=0)o.left=S.td;if(o.left<=0)return;o.end=t+o.left;o.run=true}
+ }
+ syncUI();
+}
+function reset(){
+ if(S.mode==='stopwatch'){sw.acc=0;sw.run=false;sw.laps=[];renderLaps()}
+ else if(S.mode==='timer'){cd.run=false;cd.left=S.td}
+ else if(S.mode==='pomodoro'){pm.run=false;pm.ph='f';pm.n=1;pm.left=S.pf*6e4}
+ syncUI();
+}
+const fm=ms=>{const s=Math.floor(ms/1000);return p2(Math.floor(s/60))+':'+p2(s%60)+'.'+p2(Math.floor(ms%1000/10))};
+function lap(){if(S.mode==='stopwatch'&&sw.run){sw.laps.push(swMs());renderLaps()}}
+function renderLaps(){
+ $('#laps').innerHTML=sw.laps.slice(-4).reverse().map((t,i)=>{const n=sw.laps.length-i,prev=sw.laps[n-2]||0;return`<div><span>${n}</span><span>${fm(t)}</span><span>+${fm(t-prev)}</span></div>`}).join('');syncUI();
+}
+function skip(){if(S.mode==='pomodoro'){pm.run=false;advance();syncUI()}}
+function setMode(m){S.mode=m;save();gcount=0;syncUI();tick()}
+const TI=['h','m','s'].map(x=>$('#ti-'+x));
+TI.forEach(i=>i.addEventListener('input',()=>{S.td=((+TI[0].value||0)*3600+(+TI[1].value||0)*60+(+TI[2].value||0))*1000;if(!cd.run)cd.left=S.td;save()}));
+function syncUI(){
+ const m=S.mode,r=isRun();
+ $$('#modes button').forEach(b=>b.classList.toggle('on',b.dataset.m===m));
+ $('#act').hidden=m==='time';$('#go').textContent=r?'Pause':'Start';
+ $('#lp').hidden=!(m==='stopwatch'&&r);$('#sk').hidden=m!=='pomodoro';
+ $('#ti').hidden=!(m==='timer'&&!cd.run);$('#laps').hidden=!(m==='stopwatch'&&sw.laps.length);
+ const s=Math.round(S.td/1000);[Math.floor(s/3600),Math.floor(s%3600/60),s%60].forEach((v,i)=>{if(document.activeElement!==TI[i])TI[i].value=v});
+}
+/* tick sound */
+let ac;function click(){try{ac=ac||new AudioContext();const o=ac.createOscillator(),g=ac.createGain(),t=ac.currentTime;o.type='square';o.frequency.value=1700;g.gain.setValueAtTime(.02,t);g.gain.exponentialRampToValueAtTime(.0001,t+.03);o.connect(g).connect(ac.destination);o.start(t);o.stop(t+.04)}catch(e){}}
+/* settings */
+const panel=$('#panel');
+const PRE={bg:['#000000','#1c1c1e'],fg:['#ffffff','#c7c7cc','#f6ecd9','#ff453a','#0a84ff','#30d158']};
+function markSw(){['bg','fg'].forEach(k=>$$('#sw-'+k+' button').forEach(b=>b.classList.toggle('on',b.dataset.c===S[k])))}
+function setC(k,c){S[k]=c;save();theme();markSw()}
+['bg','fg'].forEach(k=>{
+ const box=$('#sw-'+k);
+ PRE[k].forEach(c=>{const b=document.createElement('button');b.style.background=c;b.dataset.c=c;b.setAttribute('aria-label',c);b.onclick=()=>setC(k,c);box.append(b)});
+ const l=document.createElement('label'),i=document.createElement('input');l.className='cu';l.title='Custom color';i.type='color';i.value=S[k];i.setAttribute('aria-label','Custom '+k);i.oninput=()=>setC(k,i.value);l.append(i);box.append(l);
+});
+$$('[data-k]').forEach(el=>{
+ const k=el.dataset.k;if(el.type==='checkbox')el.checked=S[k];else el.value=S[k];
+ el.addEventListener('input',()=>{
+  let v=el.type==='checkbox'?el.checked:+el.value;
+  if(el.type==='number'){if(!(v>=+el.min))return;v=Math.min(v,+el.max)}
+  S[k]=v;save();theme();fit();
+  if(!pm.run&&/^p[fsl]$/.test(k))pm.left=S['p'+pm.ph]*6e4;
+ });
+});
+const openP=o=>{panel.classList.toggle('open',o);$('#gear').setAttribute('aria-expanded',o)};
+$('#gear').onclick=()=>openP(!panel.classList.contains('open'));
+$('#go').onclick=toggle;$('#rs').onclick=reset;$('#lp').onclick=lap;$('#sk').onclick=skip;
+$$('#modes button').forEach(b=>b.onclick=()=>setMode(b.dataset.m));
+function fs(){
+ const d=document,e=d.documentElement;
+ try{if(d.fullscreenElement||d.webkitFullscreenElement)(d.exitFullscreen||d.webkitExitFullscreen).call(d);else{const p=(e.requestFullscreen||e.webkitRequestFullscreen).call(e);if(p&&p.catch)p.catch(()=>{})}}catch(x){}
+}
+$('#fsb').onclick=fs;
+addEventListener('resize',fit);document.addEventListener('fullscreenchange',fit);
+/* auto-hide */
+let it;
+function wake(){
+ document.body.classList.remove('idle');clearTimeout(it);
+ it=setTimeout(function chk(){
+  if(panel.classList.contains('open')||$('.bar:hover,.ico:hover')||document.activeElement.matches('input[type=number]'))it=setTimeout(chk,3000);
+  else document.body.classList.add('idle');
+ },3200);
+}
+['pointermove','pointerdown','keydown','touchstart'].forEach(e=>addEventListener(e,wake,{passive:true}));
+/* keyboard */
+addEventListener('keydown',e=>{
+ if(e.metaKey||e.ctrlKey||e.altKey)return;
+ const tg=e.target;
+ if(e.key==='Escape'){if(panel.classList.contains('open'))openP(false);if(tg.blur)tg.blur();return}
+ if(tg.matches&&tg.matches('input[type=number]'))return;
+ const k=e.key.toLowerCase();
+ if(k===' '){if(tg.closest&&tg.closest('#panel'))return;e.preventDefault();toggle()}
+ else if(k==='f')fs();
+ else if(k==='r')reset();
+ else if(k==='l')lap();
+ else if(k===',')openP(!panel.classList.contains('open'));
+ else if('1234'.includes(k)&&k)setMode(['time','stopwatch','timer','pomodoro'][+k-1]);
+});
+theme();markSw();syncUI();tick();wake();
+</script>
+</body></html>
